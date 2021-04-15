@@ -9,7 +9,8 @@ class Anchoring{
     }
   
     createNFT(){
-
+          getContract("governance").haveAccess(...)
+                                               
     }
   
     appendInAnchor(){

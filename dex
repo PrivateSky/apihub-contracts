@@ -1,0 +1,4 @@
+
+atomicExchange: Take a set of zatSSIs and attomicaly transform them into another set of zatSSIs suggested by a list of public keys. The initial set is destroyed (got anchored with an empty transferSSI).
+transferTokenToDomain: Transfer a token from a domain to another domain
+

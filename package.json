@@ -1,0 +1,24 @@
+{
+    "name": "apihub-contracts",
+    "version": "0.1.0",
+    "description": "Default APIHub smart contracts for development mode",
+    "main": "index.js",
+    "scripts": {
+        "build-dsu-type": "node ./node_modules/octopus/scripts/buildDossier.js --bundles=../../psknode/bundles",
+        "create-domain": "node ./node_modules/octopus/scripts/createDomain.js --bundles=../../psknode/bundles",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/PrivateSky/apihub-contracts.git"
+    },
+    "author": "",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/PrivateSky/apihub-contracts/issues"
+    },
+    "homepage": "https://github.com/PrivateSky/apihub-contracts#readme",
+    "devDependencies": {
+        "octopus": "git+http://github.com/privatesky/octopus.git"
+    }
+}

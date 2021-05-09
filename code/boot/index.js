@@ -1,7 +1,8 @@
 class Boot {
-    constructor(domain, config) {
+    constructor(domain, config, rootFolder) {
         this.domain = domain;
         this.config = config;
+        this.rootFolder = rootFolder;
 
         this.dsu = null;
         this.mountedDSUs = {};
@@ -61,6 +62,7 @@ class Boot {
         contract.getMainDSU = this.getMainDSU.bind(this);
         contract.getContract = this.getContract.bind(this);
         contract.getKeySSIType = this.getKeySSIType.bind(this);
+        contract.rootFolder = this.rootFolder;
 
         callback(null, contract);
     }

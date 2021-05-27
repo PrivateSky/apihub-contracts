@@ -1,7 +1,7 @@
 class Bdns {
     constructor() {}
 
-    init(callback) {
+    async init(callback) {
         try {
             const fs = require("fs");
             const path = require("path");
@@ -9,9 +9,21 @@ class Bdns {
             const domainRelativePath = this.domain.replace(/\./g, "/");
             this.domainFolderPath = path.join(this.rootFolder, "contracts/bdns", domainRelativePath);
 
-            if (!fs.existsSync(this.domainFolderPath)) {
-                fs.mkdirSync(this.domainFolderPath, { recursive: true });
+            try {
+                await $$.promisify(fs.access)(domainFolderPath);
+            } catch (error) {
+                // domain folder doesn't exists, so we create it
+                await $$.promisify(fs.mkdir)(this.domainFolderPath, { recursive: true });
             }
+
+            // get the initial domain config from the bdns.hosts file
+            const bdnsHostsPath = path.join(process.env.PSK_CONFIG_LOCATION, "bdns.hosts");
+            const bdnsHostsContent = await $$.promisify(fs.readFile)(bdnsHostsPath);
+            const bdnsHosts = JSON.parse(bdnsHostsContent);
+
+            const domainConfig = bdnsHosts[this.domain] || {};
+            await $$.promisify(this.updateDomainInfo)(domainConfig);
+
             callback();
         } catch (error) {
             console.log("error creating bdns folder", error);
@@ -21,9 +33,33 @@ class Bdns {
 
     describeMethods() {
         return {
-            public: ["getSubdomains", "getSubdomainInfo"],
-            requireNonce: ["addSubdomain", "updateSubdomainInfo", "deleteSubdomain"],
+            public: ["getDomainInfo", "getSubdomains", "getSubdomainInfo"],
+            requireNonce: ["updateDomainInfo", "addSubdomain", "updateSubdomainInfo", "deleteSubdomain"],
         };
+    }
+
+    async getDomainInfo(callback) {
+        try {
+            const domainFilePath = this._getDomainFilePath();
+
+            const domainContent = await $$.promisify(require("fs").readFile)(domainFilePath);
+            const domainJSON = JSON.parse(domainContent);
+
+            callback(null, domainJSON);
+        } catch (error) {
+            callback(error);
+        }
+    }
+
+    async updateDomainInfo(domainJSON, callback) {
+        try {
+            const domainFilePath = this._getDomainFilePath();
+            await $$.promisify(require("fs").writeFile)(domainFilePath, JSON.stringify(domainJSON));
+
+            callback();
+        } catch (error) {
+            callback(error);
+        }
     }
 
     async getSubdomains(callback) {
@@ -99,9 +135,13 @@ class Bdns {
         }
     }
 
+    _getDomainFilePath() {
+        const domainFilePath = require("path").join(this.domainFolderPath, "config");
+        return domainFilePath;
+    }
+
     _getSubdomainFilePath(subdomain) {
-        const path = require("path");
-        const subdomainFilePath = path.join(this.domainFolderPath, subdomain, "config");
+        const subdomainFilePath = require("path").join(this.domainFolderPath, subdomain, "config");
         return subdomainFilePath;
     }
 

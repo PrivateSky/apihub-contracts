@@ -61,6 +61,7 @@ class Boot {
         contract.getDSU = this.getDSU.bind(this, contractName);
         contract.getMainDSU = this.getMainDSU.bind(this);
         contract.getContract = this.getContract.bind(this);
+        contract.getContractNames = this.getContractNames.bind(this);
         contract.getKeySSIType = this.getKeySSIType.bind(this);
         contract.rootFolder = this.rootFolder;
         contract.domain = this.domain;
@@ -78,6 +79,12 @@ class Boot {
 
     getContract(contractName) {
         return this.contracts[contractName];
+    }
+
+    getContractNames() {
+        const contracts = Object.keys(this.contracts);
+        contracts.sort();
+        return contracts;
     }
 
     getKeySSIType(keySSIString) {

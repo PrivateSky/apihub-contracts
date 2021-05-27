@@ -63,6 +63,7 @@ class Boot {
         contract.getContract = this.getContract.bind(this);
         contract.getKeySSIType = this.getKeySSIType.bind(this);
         contract.rootFolder = this.rootFolder;
+        contract.domain = this.domain;
 
         callback(null, contract);
     }

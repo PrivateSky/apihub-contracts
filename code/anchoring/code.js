@@ -1,16 +1,17 @@
 class Anchoring {
     constructor() {}
 
-    allowExecution(isLocalCall, methodName, args) {
-        // if (["createAnchor", "appendAnchor"].includes(methodName)) {
-        //     return isLocalCall && this.getKeySSIType(args[0]) === "consensus";
-        // }
-        return true;
-    }
-
-    canExecuteImmediately(isLocalCall, methodName, args) {
-        // return methodName === "versions" || this.getKeySSIType(args[0]) === "consensus";
-        return true;
+    describeMethods() {
+        return {
+            public: [
+                "getAllVersions",
+                "getLatestVersion",
+                "createAnchor",
+                "createNFT",
+                "appendToAnchor",
+                "transferTokenOwnership",
+            ],
+        };
     }
 
     createAnchor(anchorId, callback) {
@@ -24,8 +25,8 @@ class Anchoring {
         const data = {
             hashLinkIds,
             digitalProof,
-            zkp
-        }
+            zkp,
+        };
         const strategy = this._getStrategy(anchorId, data);
         strategy.appendToAnchor(callback);
     }

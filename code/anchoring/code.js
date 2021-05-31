@@ -53,9 +53,12 @@ class Anchoring {
             const keySSI = keySSISpace.parse(anchorId);
             const domain = keySSI.getDLDomain();
 
-            const apihubConfig = apihub.getServerConfig();
-            const { endpointsConfig: { anchoring: { domainStrategies = {} } = {} } = {} } = apihubConfig;
-            return domainStrategies[domain];
+            const anchoringDomainConfig = apihub.getDomainConfig(
+                domain,
+                ["anchoring"],
+                ["endpointsConfig", "anchoring", "domainStrategies"]
+            );
+            return anchoringDomainConfig;
         };
 
         const server = { rootFolder: this.rootFolder };

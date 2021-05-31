@@ -4,8 +4,8 @@ class Test {
     describeMethods() {
         return {
             intern: ["intern"],
-            public: ["public"],
-            requireNonce: ["requireNonce"],
+            safe: ["safe"],
+            nonced: ["nonced"],
         };
     }
 
@@ -13,11 +13,11 @@ class Test {
         callback(null, "intern");
     }
 
-    public(callback) {
-        callback(null, "public");
+    safe(callback) {
+        callback(null, "safe");
     }
 
-    requireNonce(callback) {
-        callback(null, "requireNonce");
+    nonced(callback) {
+        callback(null, "nonced");
     }
 }

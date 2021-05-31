@@ -5,7 +5,7 @@ class Consensus {
 
     describeMethods() {
         return {
-            public: [
+            safe: [
                 "getNonce",
                 "validateNonce",
                 "proposeCommand",

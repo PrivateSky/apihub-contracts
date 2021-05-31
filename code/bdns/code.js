@@ -33,8 +33,8 @@ class Bdns {
 
     describeMethods() {
         return {
-            public: ["getDomainInfo", "getSubdomains", "getSubdomainInfo"],
-            requireNonce: ["updateDomainInfo", "addSubdomain", "updateSubdomainInfo", "deleteSubdomain"],
+            safe: ["getDomainInfo", "getSubdomains", "getSubdomainInfo"],
+            nonced: ["updateDomainInfo", "addSubdomain", "updateSubdomainInfo", "deleteSubdomain"],
         };
     }
 

@@ -3,7 +3,7 @@ class Info {
 
     describeMethods() {
         return {
-            public: ["getContracts"],
+            safe: ["getContracts"],
         };
     }
 

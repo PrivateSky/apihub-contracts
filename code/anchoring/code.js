@@ -3,7 +3,7 @@ class Anchoring {
 
     describeMethods() {
         return {
-            public: [
+            safe: [
                 "getAllVersions",
                 "getLatestVersion",
                 "createAnchor",

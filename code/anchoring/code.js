@@ -61,7 +61,7 @@ class Anchoring {
             return anchoringDomainConfig;
         };
 
-        const server = { rootFolder: this.rootFolder };
+        const server = { rootFolder: this.config.rootFolder };
         const domainConfig = getAnchoringDomainConfig();
         const contractStrategy = new ContractStrategy(server, domainConfig, anchorId, data);
         return contractStrategy;

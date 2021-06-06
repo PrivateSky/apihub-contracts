@@ -7,10 +7,10 @@ class Bdns {
             const path = require("path");
 
             const domainRelativePath = this.domain.replace(/\./g, "/");
-            this.domainFolderPath = path.join(this.config.rootFolder, "contracts/bdns", domainRelativePath);
+            this.domainFolderPath = path.join(this.rootFolder, "contracts/bdns", domainRelativePath);
 
             try {
-                await $$.promisify(fs.access)(domainFolderPath);
+                await $$.promisify(fs.access)(this.domainFolderPath);
             } catch (error) {
                 // domain folder doesn't exists, so we create it
                 await $$.promisify(fs.mkdir)(this.domainFolderPath, { recursive: true });

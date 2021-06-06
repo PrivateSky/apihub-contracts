@@ -3,18 +3,20 @@ class Test {
 
     describeMethods() {
         return {
-            intern: ["intern"],
-            safe: ["safe"],
+            safe: ["safe", "safeWithConsensus"],
             nonced: ["nonced"],
         };
     }
 
-    intern(callback) {
-        callback(null, "intern");
-    }
-
     safe(callback) {
         callback(null, "safe");
+    }
+
+    safeWithConsensus(callback) {
+        this.keyValueStorage.set("key", "value");
+        callback(null, "safeWithConsensus");
+
+        this.getContract("anchoring").createAnchor();
     }
 
     nonced(callback) {

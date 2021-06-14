@@ -4,7 +4,7 @@ class Test {
     describeMethods() {
         return {
             safe: ["safe", "safeWithConsensus"],
-            nonced: ["nonced"],
+            nonced: ["nonced", "noncedWithConsensus"],
         };
     }
 
@@ -13,13 +13,16 @@ class Test {
     }
 
     safeWithConsensus(callback) {
-        this.keyValueStorage.set("key", "value");
+        this.keyValueStorage.set("safe-key", "safe-value");
         callback(null, "safeWithConsensus");
-
-        this.getContract("anchoring").createAnchor();
     }
 
     nonced(callback) {
         callback(null, "nonced");
+    }
+
+    noncedWithConsensus(callback) {
+        this.keyValueStorage.set("nonced-key", "nonced-value");
+        callback(null, "noncedWithConsensus");
     }
 }

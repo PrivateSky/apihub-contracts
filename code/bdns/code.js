@@ -11,7 +11,6 @@ class Bdns {
                 : path.join(this.rootFolder, "config");
 
             this.bdnsFolderPath = path.join(configFolderPath, "bdns");
-            console.log('bdnsFolderPath', this.bdnsFolderPath)
 
             try {
                 await $$.promisify(fs.access)(this.bdnsFolderPath);
@@ -62,9 +61,24 @@ class Bdns {
     }
 
     async getSubdomains(callback) {
+        const path = require("path");
         try {
+            const subdomainSuffix = `.${this.domain}.json`;
             const domainFiles = await $$.promisify(require("fs").readdir)(this.bdnsFolderPath, { withFileTypes: true });
-            const subdomains = domainFiles.filter((file) => file.isDirectory()).map((file) => file.name);
+
+            const subdomains = domainFiles
+                .filter((file) => file.isFile() && path.extname(file.name) == ".json")
+                .map((file) => file.name)
+                .filter((name) => {
+                    if (!name.endsWith(subdomainSuffix)) {
+                        return false;
+                    }
+
+                    const filePrefix = name.substring(0, name.lastIndexOf(subdomainSuffix));
+                    const isDirectSubdomain = filePrefix.indexOf(".") === -1;
+                    return isDirectSubdomain;
+                })
+                .map((name) => name.replace(subdomainSuffix, ""));
             callback(null, subdomains);
         } catch (error) {
             callback(error);
@@ -72,6 +86,10 @@ class Bdns {
     }
 
     async addSubdomain(subdomain, callback) {
+        if (!subdomain || subdomain.indexOf(".") !== -1) {
+            return callback("Invalid subdomain specified");
+        }
+
         const fs = require("fs");
         const subdomainFilePath = this._getSubdomainFilePath(subdomain);
 
@@ -83,9 +101,6 @@ class Bdns {
         }
 
         try {
-            const subbdnsFolderPath = require("path").dirname(subdomainFilePath);
-
-            await $$.promisify(fs.mkdir)(subbdnsFolderPath, { recursive: true });
             await this._writeConfigToFile({}, subdomainFilePath);
 
             callback();
@@ -172,7 +187,7 @@ class Bdns {
     }
 
     _getSubdomainFilePath(subdomain) {
-        const subdomainFile = `${subdomain}.${this.domain}`;
+        const subdomainFile = `${subdomain}.${this.domain}.json`;
         const subdomainFilePath = require("path").join(this.bdnsFolderPath, subdomainFile);
         return subdomainFilePath;
     }

@@ -3,14 +3,7 @@ class Anchoring {
 
     describeMethods() {
         return {
-            safe: [
-                "getAllVersions",
-                "getLatestVersion",
-                "createAnchor",
-                "createNFT",
-                "appendToAnchor",
-                "transferTokenOwnership",
-            ],
+            safe: ["getAllVersions", "getLatestVersion", "createAnchor", "createNFT", "appendToAnchor", "transferTokenOwnership"],
         };
     }
 
@@ -53,11 +46,22 @@ class Anchoring {
             const keySSI = keySSISpace.parse(anchorId);
             const domain = keySSI.getDLDomain();
 
-            const anchoringDomainConfig = apihub.getDomainConfig(
-                domain,
-                ["anchoring"],
-                ["endpointsConfig", "anchoring", "domainStrategies"]
-            );
+            let apihubConfig = apihub.getServerConfig();
+            let anchoringDomainConfig = apihub.getDomainConfig(domain, "anchoring");
+            if (!anchoringDomainConfig) {
+                // try to get the anchoring strategy based on the anchoring component config
+                const anchoringConfig = apihubConfig.componentsConfig ? apihubConfig.componentsConfig.anchoring : null;
+                if (anchoringConfig) {
+                    const { anchoringStrategy } = anchoringConfig;
+                    anchoringDomainConfig = {
+                        type: anchoringStrategy,
+                    };
+                }
+            }
+
+            anchoringDomainConfig = JSON.parse(JSON.stringify(anchoringDomainConfig)) || {};
+            anchoringDomainConfig.option = anchoringDomainConfig.option || {};
+            anchoringDomainConfig.option.path = require("path").join(apihubConfig.externalStorage, `domains/${domain}/anchors`);
             return anchoringDomainConfig;
         };
 

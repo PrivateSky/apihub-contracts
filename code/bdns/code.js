@@ -31,25 +31,24 @@ class Bdns {
 
     describeMethods() {
         return {
-            safe: ["getDomainInfo", "getSubdomains", "getSubdomainInfo"],
-            nonced: ["updateDomainInfo", "addSubdomain", "updateSubdomainInfo", "deleteSubdomain"],
+            safe: ["getDomainInfo", "getSubdomains", "getSubdomainInfo", "getDomainValidators"],
+            nonced: ["updateDomainInfo", "addSubdomain", "updateSubdomainInfo", "deleteSubdomain", "addDomainValidator"],
         };
     }
 
     async getDomainInfo(callback) {
-        try {
-            const domainFilePath = this._getDomainFilePath();
-
-            const domainContent = await $$.promisify(require("fs").readFile)(domainFilePath);
-            const domainJSON = JSON.parse(domainContent);
-
-            callback(null, domainJSON);
-        } catch (error) {
-            callback(error);
-        }
+        callback = $$.makeSaneCallback(callback);
+        this._getDomainInfoAsync()
+            .then((result) => callback(undefined, result))
+            .catch((error) => callback(error));
     }
 
     async updateDomainInfo(domainJSON, callback) {
+        callback = $$.makeSaneCallback(callback);
+        if (!domainJSON || typeof domainJSON !== "object") {
+            return callback("Missing or invalid domainJSON specified");
+        }
+
         try {
             const domainFilePath = this._getDomainFilePath();
             await this._writeConfigToFile(domainJSON, domainFilePath);
@@ -61,6 +60,7 @@ class Bdns {
     }
 
     async getSubdomains(callback) {
+        callback = $$.makeSaneCallback(callback);
         const path = require("path");
         try {
             const subdomainSuffix = `.${this.domain}.json`;
@@ -86,6 +86,7 @@ class Bdns {
     }
 
     async addSubdomain(subdomain, callback) {
+        callback = $$.makeSaneCallback(callback);
         if (!subdomain || subdomain.indexOf(".") !== -1) {
             return callback("Invalid subdomain specified");
         }
@@ -110,12 +111,13 @@ class Bdns {
     }
 
     async getSubdomainInfo(subdomain, callback) {
+        callback = $$.makeSaneCallback(callback);
         try {
             await this._ensureSubdomainExists(subdomain);
 
             const subdomainFilePath = this._getSubdomainFilePath(subdomain);
             const subdomainContent = await $$.promisify(require("fs").readFile)(subdomainFilePath);
-            const subdomainJSON = JSON.parse(subdomainContent);
+            const subdomainJSON = JSON.parse(subdomainContent.toString());
 
             callback(null, subdomainJSON);
         } catch (error) {
@@ -124,6 +126,7 @@ class Bdns {
     }
 
     async updateSubdomainInfo(subdomain, subdomainJSON, callback) {
+        callback = $$.makeSaneCallback(callback);
         try {
             await this._ensureSubdomainExists(subdomain);
 
@@ -136,7 +139,8 @@ class Bdns {
         }
     }
 
-    async deleteSubdomain(subdomain) {
+    async deleteSubdomain(subdomain, callback) {
+        callback = $$.makeSaneCallback(callback);
         try {
             await this._ensureSubdomainExists(subdomain);
 
@@ -147,6 +151,62 @@ class Bdns {
         } catch (error) {
             callback(error);
         }
+    }
+
+    async getDomainValidators(callback) {
+        callback = $$.makeSaneCallback(callback);
+        try {
+            const domainInfo = await this._getDomainInfoAsync();
+            const validators = domainInfo ? domainInfo.validators : null;
+            callback(validators);
+        } catch (error) {
+            callback(error);
+        }
+    }
+
+    async addDomainValidator(validator, callback) {
+        callback = $$.makeSaneCallback(callback);
+        if (!validator) {
+            return callback("Validator must be specified");
+        }
+        const { DID, URL } = validator;
+        if (!DID || typeof DID !== "string") {
+            return callback("Missing or invalid DID specified");
+        }
+        if (!URL || typeof URL !== "string") {
+            return callback("Missing or invalid URL specified");
+        }
+
+        try {
+            const domainInfo = await this._getDomainInfoAsync();
+            const validators = domainInfo ? domainInfo.validators : [];
+
+            const isValidatorDIDPresent = validators.some((validator) => validator.DID === DID);
+            if (isValidatorDIDPresent) {
+                console.log(`Validator DID ${DID} already present so skipping it...`);
+                return callback();
+            }
+
+            const isValidatorURLPresent = validators.some((validator) => validator.URL === URL);
+            if (isValidatorURLPresent) {
+                console.log(`Validator URL ${URL} already present but for other validatorDID so skipping it...`);
+                return callback();
+            }
+
+            validators.push({ DID, URL });
+            const updatedDomainInfo = { ...domainInfo, validators };
+            this.updateDomainInfo(updatedDomainInfo, callback);
+        } catch (error) {
+            callback(error);
+        }
+    }
+
+    async _getDomainInfoAsync() {
+        const domainFilePath = this._getDomainFilePath();
+
+        const domainContent = await $$.promisify(require("fs").readFile)(domainFilePath);
+        const domainJSON = JSON.parse(domainContent.toString());
+        return domainJSON;
     }
 
     async _ensureSubdomainExists(subdomain) {
@@ -162,9 +222,9 @@ class Bdns {
         const path = require("path");
         const bdnsHostsPath = path.join(configFolderPath, "bdns.hosts");
         const bdnsHostsContent = await $$.promisify(fs.readFile)(bdnsHostsPath);
-        const bdnsHosts = JSON.parse(bdnsHostsContent);
+        const bdnsHosts = JSON.parse(bdnsHostsContent.toString());
 
-        const domainFileExists = await this._checkIfFileExists(this._getDomainFilePath);
+        const domainFileExists = await this._checkIfFileExists(this._getDomainFilePath());
         if (!domainFileExists) {
             const domainConfig = bdnsHosts[this.domain] || {};
             await $$.promisify(this.updateDomainInfo)(domainConfig);

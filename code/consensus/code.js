@@ -1,63 +1,109 @@
 class Consensus {
-    constructor() {
-        this.nouncesState = {};
+    async init(callback) {
+        callback = $$.makeSaneCallback(callback);
+        try {
+            this.validatedBlocksFilePath = await this._getValidatedBlocksFilePath();
+
+            const bricksledger = require("bricksledger");
+            this.brickStorage = bricksledger.createFSBrickStorage(
+                this.domain,
+                `domains/${this.domain}/brick-storage`,
+                this.rootFolder
+            );
+            callback();
+        } catch (error) {
+            console.log("error initialising consensus", error);
+            callback(error);
+        }
     }
 
     describeMethods() {
         return {
-            safe: [
-                "getNonce",
-                "validateNonce",
-                "proposeCommand",
-                "getLatestState",
-                "checkChangeStatus",
-                "downloadCurrentState",
-                "dumpHistory",
-            ],
+            safe: ["getLatestBlockInfo", "getBlock", "getPBlock", "getProposedPBlockForBlock"],
         };
     }
 
-    getNonce(signerDID, callback) {
-        if (!this.nouncesState[signerDID]) {
-            this.nouncesState[signerDID] = { latest: 0, used: false };
+    async getLatestBlockInfo(callback) {
+        callback = $$.makeSaneCallback(callback);
+        try {
+            let latestBlockNumber = 0;
+            let latestBlockHash = null;
+
+            if (await checkIfPathExists(this.validatedBlocksFilePath)) {
+                const fs = require("fs");
+                const os = require("os");
+                const readStream = fs.createReadStream(this.validatedBlocksFilePath);
+                readStream
+                    .on("data", function (chunk) {
+                        // split chunk by newline in order to get the block hashes
+                        const hashes = chunk
+                            .toString()
+                            .split(os.EOL)
+                            .map((hash) => (hash ? hash.trim() : null))
+                            .filter((hash) => !!hash);
+
+                        if (hashes.length) {
+                            latestBlockNumber += hashes.length;
+                            latestBlockHash = hashes[hashes.length - 1];
+                        }
+                    })
+                    .on("close", function (error) {
+                        if (error) {
+                            return callback(error);
+                        }
+
+                        callback(null, {
+                            number: latestBlockNumber,
+                            hash: latestBlockHash,
+                        });
+                    });
+            } else {
+                callback(null, { number: latestBlockNumber, hash: latestBlockHash });
+            }
+        } catch (error) {
+            callback(error);
         }
-
-        // every time we are returning a nonce we increment the latest one and mark the used as false;
-        // used will be marked as true when validating the nonce in order to not allow future validation for the same nonce
-        this.nouncesState[signerDID].latest++;
-        this.nouncesState[signerDID].used = false;
-
-        const newNounce = this.nouncesState[signerDID].latest;
-        callback(null, newNounce);
     }
 
-    validateNonce(signerDID, nonce, callback) {
-        if (!this.nouncesState[signerDID]) {
-            return callback(null, nonce == 1);
-        }
-
-        const { latest, used } = this.nouncesState[signerDID];
-        const isValid = latest == nonce && !used;
-
-        // mark the latest nonce as used in order to not be used in the future
-        if (isValid) {
-            this.nouncesState[signerDID].used = true;
-        }
-        callback(null, isValid);
+    getBlock(blockHashLinkSSI, callback) {
+        this.brickStorage.getBrick(blockHashLinkSSI, callback);
     }
 
-    proposeCommand(command, callback) {
-        // todo: add actual consensus logic
-        setTimeout(() => {
-            callback(null, true);
-        }, 1000);
+    getPBlock(pBlockHashLinkSSI, callback) {
+        this.brickStorage.getBrick(pBlockHashLinkSSI, callback);
     }
 
-    getLatestState() {}
+    getProposedPBlockForBlock(blockNumber, callback) {
+        this.getPBlockProposedForConsensus(blockNumber, callback);
+    }
 
-    checkChangeStatus() {}
+    async _getValidatedBlocksFilePath() {
+        const path = require("path");
+        const validatedBlocksFolderPath = path.join(this.rootFolder, "domains", this.domain);
+        try {
+            await this._ensureFolderPathExists(validatedBlocksFolderPath);
+        } catch (error) {
+            console.log(error);
+        }
 
-    downloadCurrentState() {}
+        const validatedBlocksFilePath = path.join(validatedBlocksFolderPath, "blocks");
+        return validatedBlocksFilePath;
+    }
 
-    dumpHistory() {}
+    async _ensureFolderPathExists(path) {
+        const fs = require("fs");
+        if (!(await this._checkIfPathExists(path))) {
+            await $$.promisify(fs.mkdir)(path, { recursive: true });
+        }
+    }
+
+    async _checkIfPathExists(path) {
+        try {
+            const fs = require("fs");
+            await $$.promisify(fs.access)(path);
+            return true;
+        } catch (error) {
+            return false;
+        }
+    }
 }

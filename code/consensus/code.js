@@ -19,7 +19,7 @@ class Consensus {
 
     describeMethods() {
         return {
-            safe: ["getLatestBlockInfo", "getBlock", "getPBlock", "getProposedPBlockForBlock"],
+            safe: ["getLatestBlockInfo", "getBlock", "getPBlock", "getPBlockProposedByValidator"],
         };
     }
 
@@ -73,8 +73,8 @@ class Consensus {
         this.brickStorage.getBrick(pBlockHashLinkSSI, callback);
     }
 
-    getProposedPBlockForBlock(blockNumber, callback) {
-        this.getPBlockProposedForConsensus(blockNumber, callback);
+    getPBlockProposedByValidator(blockNumber, validatorDID, callback) {
+        this.getPBlockProposedForConsensus(blockNumber, validatorDID, callback);
     }
 
     async _getValidatedBlocksFilePath() {

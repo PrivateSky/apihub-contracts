@@ -8,7 +8,7 @@ class Bdns {
 
             const configFolderPath = process.env.PSK_CONFIG_LOCATION
                 ? process.env.PSK_CONFIG_LOCATION
-                : path.join(this.rootFolder, "config");
+                : path.join(this.storageFolder, "config");
 
             this.bdnsFolderPath = path.join(configFolderPath, "bdns");
 
@@ -158,7 +158,7 @@ class Bdns {
         try {
             const domainInfo = await this._getDomainInfoAsync();
             const validators = domainInfo ? domainInfo.validators : null;
-            callback(validators);
+            callback(null, validators);
         } catch (error) {
             callback(error);
         }

@@ -8,7 +8,7 @@ class Consensus {
             this.brickStorage = bricksledger.createFSBrickStorage(
                 this.domain,
                 `domains/${this.domain}/brick-storage`,
-                this.rootFolder
+                this.storageFolder
             );
             callback();
         } catch (error) {
@@ -29,7 +29,7 @@ class Consensus {
             let latestBlockNumber = 0;
             let latestBlockHash = null;
 
-            if (await checkIfPathExists(this.validatedBlocksFilePath)) {
+            if (await this._checkIfPathExists(this.validatedBlocksFilePath)) {
                 const fs = require("fs");
                 const os = require("os");
                 const readStream = fs.createReadStream(this.validatedBlocksFilePath);
@@ -66,20 +66,38 @@ class Consensus {
     }
 
     getBlock(blockHashLinkSSI, callback) {
-        this.brickStorage.getBrick(blockHashLinkSSI, callback);
+        let hash;
+        try {
+            hash = this._getHashFromHashLinkSSI(blockHashLinkSSI);
+        } catch (error) {
+            return callback(error);
+        }
+        this.brickStorage.getBrick(hash, callback);
     }
 
     getPBlock(pBlockHashLinkSSI, callback) {
-        this.brickStorage.getBrick(pBlockHashLinkSSI, callback);
+        let hash;
+        try {
+            hash = this._getHashFromHashLinkSSI(pBlockHashLinkSSI);
+        } catch (error) {
+            return callback(error);
+        }
+        this.brickStorage.getBrick(hash, callback);
     }
 
     getPBlockProposedByValidator(blockNumber, validatorDID, callback) {
         this.getPBlockProposedForConsensus(blockNumber, validatorDID, callback);
     }
 
+    _getHashFromHashLinkSSI(hashLinkSSI) {
+        const keySSI = require("opendsu").loadApi("keyssi");
+        hashLinkSSI = keySSI.parse(hashLinkSSI);
+        return hashLinkSSI.getHash();
+    }
+
     async _getValidatedBlocksFilePath() {
         const path = require("path");
-        const validatedBlocksFolderPath = path.join(this.rootFolder, "domains", this.domain);
+        const validatedBlocksFolderPath = path.join(this.storageFolder, "domains", this.domain);
         try {
             await this._ensureFolderPathExists(validatedBlocksFolderPath);
         } catch (error) {

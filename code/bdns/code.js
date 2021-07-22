@@ -31,7 +31,7 @@ class Bdns {
 
     describeMethods() {
         return {
-            safe: ["getDomainInfo", "getSubdomains", "getSubdomainInfo", "getDomainValidators"],
+            safe: ["getDomainInfo", "getDomainEntry", "getSubdomains", "getSubdomainInfo", "getDomainValidators"],
             nonced: ["updateDomainInfo", "addSubdomain", "updateSubdomainInfo", "deleteSubdomain", "addDomainValidator"],
         };
     }
@@ -40,6 +40,17 @@ class Bdns {
         callback = $$.makeSaneCallback(callback);
         this._getDomainInfoAsync()
             .then((result) => callback(undefined, result))
+            .catch((error) => callback(error));
+    }
+
+    async getDomainEntry(entry, callback) {
+        callback = $$.makeSaneCallback(callback);
+        if (!entry || typeof entry !== "string") {
+            return callback("Missing or invalid entry specified");
+        }
+
+        this._getDomainInfoAsync()
+            .then((result) => callback(undefined, result ? result[entry] : null))
             .catch((error) => callback(error));
     }
 

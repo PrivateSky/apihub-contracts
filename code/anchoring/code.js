@@ -63,13 +63,13 @@ class Anchoring {
         const rootKeySSITypeName = anchorKeySSI.getRootKeySSITypeName();
         const rootKeySSI = createTemplateKeySSI(rootKeySSITypeName, anchorKeySSI.getDLDomain());
 
-        if (createWithoutVersion || !rootKeySSI.canSign()) {
-            await this._writeToAnchorStorage(createWithoutVersion, anchorId);
-            return;
+        if (!createWithoutVersion && (!data || !data.hashLinkIds)) {
+            throw this._getErrorWrapper(`Missing append data provided for anchor ${anchorId}`, 400);
         }
 
-        if (!data || !data.hashLinkIds) {
-            throw this._getErrorWrapper(`Missing append data provided for anchor ${anchorId}`, 400);
+        if (createWithoutVersion || !rootKeySSI.canSign()) {
+            await this._writeToAnchorStorage(createWithoutVersion, anchorId, createWithoutVersion ? null : data.hashLinkIds);
+            return;
         }
 
         const { hashLinkIds } = data;

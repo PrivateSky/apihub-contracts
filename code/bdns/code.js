@@ -62,6 +62,7 @@ class Bdns {
 
         try {
             const domainFilePath = this._getDomainFilePath();
+            console.log(`[BDNS-contract] Updating domain content to ${domainFilePath} with: `, domainJSON);
             await this._writeConfigToFile(domainJSON, domainFilePath);
 
             callback();
@@ -216,6 +217,7 @@ class Bdns {
         const domainFilePath = this._getDomainFilePath();
 
         const domainContent = await $$.promisify(require("fs").readFile)(domainFilePath);
+        console.log(`[BDNS-contract] Getting domain content from ${domainFilePath}: `, domainContent.toString());
         const domainJSON = JSON.parse(domainContent.toString());
         return domainJSON;
     }

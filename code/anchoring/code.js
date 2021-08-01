@@ -113,10 +113,7 @@ class Anchoring {
         if (createWithoutVersion) {
             if (existingVersions && existingVersions.length) {
                 // the anchor file already exists and has versions, so we cannot create another file for the same anchor
-                return this._getErrorWrapper(
-                    `Unable to create anchor for existing anchorId ${anchorId}`,
-                    "anchor-already-exists"
-                );
+                throw this._getErrorWrapper(`Unable to create anchor for existing anchorId ${anchorId}`, "anchor-already-exists");
             }
 
             await this.keyValueStorage.set(anchorId, []);
